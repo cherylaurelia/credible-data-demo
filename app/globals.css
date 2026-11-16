@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/* From credibledata.com (computed styles, 2026-11-15): page #f5f5f4, ink #1c1917 / body #44403b,
+   border #e7e5e4, button #5c7a93 on white with 8px radius, eyebrow in a warm gold mono;
+   headings Fustat 800, body Diatype (commercial, so Inter stands in). */
+@theme {
+  --color-page: #f5f5f4;
+  --color-card: #ffffff;
+  --color-line: #e7e5e4;
+  --color-ink: #1c1917;
+  --color-body: #44403b;
+  --color-muted: #6b6560;
+  --color-slate: #5c7a93;
+  --color-gold: #8a6a3a;
+  --color-pass: #2f7d5b;
+  --color-near: #b07a1c;
+  --color-fail: #b4473c;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-fustat), var(--font-inter), system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-body);
+  font-family: var(--font-sans);
+}

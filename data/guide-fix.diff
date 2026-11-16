@@ -1,0 +1,42 @@
+--- a/examples/storefront/skills/storefront-conventions/SKILL.md
++++ b/examples/storefront/skills/storefront-conventions/SKILL.md
+@@ -31,7 +31,10 @@
+ 9.2% of what the model calls revenue is a line that was cancelled or sent back.
+ Nothing in the field name or its `#(doc)` says so.
+ 
+-Decide which one the question wants, and say which you used. If it wants
++Decide which one the question wants, and say which you used. A question that
++asks for a total ("total spend", "total revenue") wants `total_sales` as
++defined, every line; filter only when it says net, realised, or names what to
++leave out. If it wants
+ realised revenue, filter it yourself:
+ 
+ ```malloy
+@@ -64,11 +67,26 @@
+ discounts, no shipping, no returns netted out, no operating cost. Call it gross
+ margin in the answer, never "profit".
+ 
++## List price is on products
++
++`products.retail_price` is the list price. It is a column of the parquet file,
++so it is queryable even though the model text never declares it. How far below
++list a line sold is `1 - sale_price / products.retail_price`.
++
++## A product field summed over lines
++
++From `order_items`, `products.retail_price.sum()` counts each product once
++(17,525.92: the catalog), while `sum(products.retail_price)` counts it once per
++line (2,218,715.93: list value of everything sold). For anything "per item
++sold", use `sum(products.x)` or `avg(products.x)`; the dotted form is the
++per-product figure.
++
+ ## What this package cannot answer
+ 
+ Say so plainly rather than substituting a proxy:
+ 
+-- Net revenue, discounts, tax, shipping. Not modelled.
++- Net revenue, tax, shipping. Not modelled. (Discount against list price is
++  answerable: see "List price is on products" above.)
+ - Customer churn or retention cohorts. There is a `signup_date` on `customers`
+   but no subscription or activity table.
+ - Inventory, stock levels, fulfilment times. Not modelled.
