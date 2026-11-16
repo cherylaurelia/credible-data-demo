@@ -114,8 +114,13 @@ export default function Page() {
   const cost = (arm: Arm) => `$${meanCost(runs, arm).toFixed(3)}`;
   const spend = "storefront-tour-top-customer-spend";
   const discount = "storefront-tour-avg-discount";
-  const spendMcp = tally(runs, "mcp", [spend]);
-  const spendFix = tally(runs, "fix", [spend]);
+  const fix = tally(runs, "fix", tour);
+  const heldOut: string[] = [];
+
+  for (const c of cases) if (c.qid.startsWith("h-")) heldOut.push(c.qid);
+  const heldMcp = tally(runs, "mcp", heldOut);
+  const heldFix = tally(runs, "fix", heldOut);
+  const heldRaw = tally(runs, "raw", heldOut);
 
   return (
     <main className="mx-auto max-w-4xl px-5 py-12 sm:py-16">
@@ -126,16 +131,17 @@ export default function Page() {
         A raw-SQL baseline for storefront-tour
       </h1>
       <p className="mx-auto mt-6 max-w-2xl text-center text-lg">
-        On your own answer key, Claude matched <strong className="text-ink">{perPass(mcp.match)} of 12</strong> through
-        Publisher and <strong className="text-ink">{perPass(raw.match)} of 12</strong> with plain SQL on the same files. But
-        the conventions guide still turns &ldquo;total spend&rdquo; into net spend in every run.
+        On your own answer key, Claude matched <strong className="text-ink">{perPass(mcp.match)} of 12</strong> per pass
+        through Publisher and <strong className="text-ink">{perPass(raw.match)} of 12</strong> with plain SQL on the same files:
+        the model wins. Most of what is left is the conventions guide turning &ldquo;total&rdquo; into net revenue.
       </p>
       <p className="mx-auto mt-3 max-w-2xl text-center text-lg">
-        A 16-line guide edit takes that question from{" "}
+        A general 16-line guide edit raises Publisher to <strong className="text-ink">{perPass(fix.match)} of 12</strong>, and to{" "}
         <strong className="text-ink">
-          {spendMcp.match} of {spendMcp.total} to {spendFix.match} of {spendFix.total}
+          {heldFix.match} of {heldFix.total}
         </strong>{" "}
-        and the discount question from three or four queries to one, with no question getting worse.
+        on three held-out &ldquo;total&rdquo; questions written before it ({heldMcp.match} of {heldMcp.total} with the guide as
+        shipped).
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <a href={REPO} className="rounded-lg bg-slate px-4 py-2.5 text-sm font-medium text-white hover:opacity-90">
@@ -148,9 +154,9 @@ export default function Page() {
 
       <dl className="mt-12 grid gap-4 sm:grid-cols-3">
         {[
-          { k: "Matches per pass, 12 questions", v: `${perPass(mcp.match)} vs ${perPass(raw.match)}`, s: "Publisher MCP vs raw SQL, 3 passes each" },
-          { k: "Top customer by total spend", v: `${spendMcp.match}/${spendMcp.total} → ${spendFix.match}/${spendFix.total}`, s: "3 runs with the shipped guide, 5 with the edit" },
-          { k: "Mean cost per question", v: `${cost("mcp")} vs ${cost("raw")}`, s: "Sonnet via claude -p, as measured" },
+          { k: "Matches per pass, 12 questions", v: `${perPass(raw.match)} → ${perPass(mcp.match)} → ${perPass(fix.match)}`, s: "raw SQL → Publisher → Publisher + guide edit, 3 passes each" },
+          { k: "Held-out “total” questions", v: `${heldRaw.match} → ${heldMcp.match} → ${heldFix.match} of ${heldFix.total}`, s: "same three arms, written before the edit" },
+          { k: "Mean cost per question", v: `${cost("mcp")} vs ${cost("raw")}`, s: "Publisher vs raw SQL; Sonnet, four small local files, so only this setup" },
         ].map((card) => (
           <div key={card.k} className="rounded-xl border border-line bg-card p-5">
             <dt className="text-sm text-muted">{card.k}</dt>
@@ -166,7 +172,8 @@ export default function Page() {
             The guide says <code>total_sales</code> includes cancelled and returned lines and tells the agent to decide which
             revenue the question wants. For <em>&ldquo;Who is our single biggest customer by total spend?&rdquo;</em> it filtered
             them out every time, and named the wrong customer. Your eval README already marks this case as a finding about the
-            guide; what this page adds is a tested edit.
+            guide; what this page adds is a tested edit. The same habit costs Publisher
+            the held-out questions below (&ldquo;total revenue in 2024&rdquo;, &ldquo;spent the most in total&rdquo;).
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -181,13 +188,13 @@ export default function Page() {
           <p className="text-sm text-muted">The key wants Delilah Okafor, about $8,818: every line, as &ldquo;total&rdquo; says.</p>
         </Section>
 
-        <Section eyebrow="Finding 2" title="Discount: right answer, but 7–9 tool calls and twice the cost">
+        <Section eyebrow="Finding 2" title="Discount: right answer, but 7–9 tool calls and 5× the cost">
           <p>
             <code>products.retail_price</code> is in the parquet but not in the model text, and the guide lists discounts under
             &ldquo;Not modelled&rdquo;. The agent still got about 5.4% in every run. But all three first tried{" "}
             <code>products.retail_price.sum()</code>. From <code>order_items</code>, that sums each product once ($17,525.92, the
             catalog) instead of once per line sold ($2,218,715.93). They noticed and re-queried. With the guide saying where list
-            price lives and which form counts per line, each run took one query.
+            price lives and, in general terms, which aggregate form counts per line, no run took the detour.
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -204,15 +211,20 @@ export default function Page() {
             </div>
           </div>
           <p className="text-sm text-muted">
-            Tool calls per run: 7, 9, 9 with the shipped guide; 5 in each run with the edit. Mean cost $0.21 → $0.11 on this
-            question.
+            Tool calls per run: 7, 9, 9 with the shipped guide; 5, 5, 6 with the edit. Mean cost on this question $0.21 → $0.04.
           </p>
         </Section>
 
         <Section eyebrow="The guide edit" title="16 lines in skills/storefront-conventions">
+          <p className="rounded-lg border border-gold/40 bg-page p-3 text-sm">
+            Your eval README asks people not to edit the package to make cases pass. This is offered as input to{" "}
+            <code>skill:eval-improve</code>, not as a patch: the edit states rules in general terms and carries no figure from
+            the answer key, and the held-out questions check that it isn&apos;t tuned to the twelve.
+          </p>
           <p>
-            Served as a copy of the package in a second environment (<code>fixed</code>). The arm re-ran both questions above,
-            five times each, plus four questions whose revenue basis the edit could shift, three times each. None got worse.{" "}
+            Served as a copy of the package in a second environment (<code>fixed</code>), all twelve questions × 3 plus the three
+            held-out ones. Every question scored the same or better except orders per customer, where one of three runs was a
+            near match (it led with 11.0 over all 1,000 customers).{" "}
             <a className="underline" href={GUIDE}>
               The guide as shipped
             </a>
@@ -235,10 +247,10 @@ export default function Page() {
           </pre>
         </Section>
 
-        <Section eyebrow="Every run" title="All 16 questions, every run">
+        <Section eyebrow="Every run" title="All 19 questions, every run">
           <p>
-            Twelve are your <a className="underline" href={TOUR_SET}>storefront-tour</a> set, graded with its own rubrics. Four I
-            added (5 runs each): one customer-grain share, where counting lines instead of customers shifts the answer by a
+            Twelve are your <a className="underline" href={TOUR_SET}>storefront-tour</a> set, graded with its own rubrics. Three
+            are held-out &ldquo;total&rdquo; questions with rubrics in the same style. Four I added earlier (5 runs each): one customer-grain share, where counting lines instead of customers shifts the answer by a
             point, and three ambiguous metrics, where only consistency was checked. Raw SQL loses mostly by switching to net
             revenue unasked (peak month, top region, signup cohort); Publisher uses <code>total_sales</code> as defined.
           </p>
@@ -260,7 +272,8 @@ export default function Page() {
                     <td className="py-2 pr-3">
                       <span className="text-ink">{c.question}</span>
                       {DESIGNED_TO_FAIL.has(c.qid) && <span className="ml-2 text-xs text-gold">designed to fail</span>}
-                      {!c.qid.startsWith("storefront-tour") && <span className="ml-2 text-xs text-gold">added</span>}
+                      {c.qid.startsWith("x-") && <span className="ml-2 text-xs text-gold">added</span>}
+                      {c.qid.startsWith("h-") && <span className="ml-2 text-xs text-gold">held out</span>}
                       {CONSISTENCY.has(c.qid) && (
                         <span className="mt-0.5 block text-xs text-muted">consistency check, no key: {leadSummary(runs, c.qid)}</span>
                       )}
@@ -282,7 +295,7 @@ export default function Page() {
                 {DOT[v].label}
               </span>
             ))}
-            <span>Hover a dot for that run&apos;s answer. &ldquo;Not re-run&rdquo;: the guide edit can&apos;t change that question&apos;s basis, so the fix arm skipped it.</span>
+            <span>Hover a dot for that run&apos;s answer. &ldquo;Not re-run&rdquo;: added consistency questions the fix arm skipped.</span>
           </p>
           <p className="text-sm text-muted">
             Consistency did not separate the arms here: average order value was $190.74 and gross margin 47.3% in all ten runs
@@ -312,7 +325,7 @@ export default function Page() {
             </li>
             <li>
               Grading: Sonnet with each case&apos;s rubric, one call per answer; every verdict and the answer it judged are in the
-              repo. 134 runs, {runs.length} graded, $12 total.
+              repo. {runs.length} runs, all graded, ${Math.round(runs.reduce((sum, run) => sum + run.cost, 0))} in answering cost.
             </li>
             <li>
               Not shown: other models, embedding retrieval, other packages, real warehouse schemas. The raw arm got a one-line

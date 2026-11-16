@@ -539,5 +539,29 @@
    "rubric": "CONSISTENCY: no single right answer. Do not grade correctness; extract the headline figure and the definition used."
   },
   "reps": 5
+ },
+ {
+  "qid": "h-total-revenue-2024",
+  "question": "What was our total revenue in 2024?",
+  "reps": 3,
+  "golden": {
+   "rubric": "Held-out (written before the revised guide edit). Correct if the answer's main figure is about $681,893 (accept $681,400-$682,400): every line in 2024, as 'total' says. Near match if it gives both and leads with the net figure of about $615,377 while also giving $681,893. Wrong if it gives only the net figure or another number."
+  }
+ },
+ {
+  "qid": "h-top-state-total",
+  "question": "Which state's customers spent the most in total, and how much?",
+  "reps": 3,
+  "golden": {
+   "rubric": "Held-out (written before the revised guide edit). Correct if it names California with about $206,155 (accept $205,700-$206,600), every line. Near match if it names California but leads with the net figure of about $187,939 while also giving $206,155. Wrong if it names another state or gives only the net figure."
+  }
+ },
+ {
+  "qid": "h-drift-2025-total",
+  "question": "What were total sales for the Drift brand in 2025?",
+  "reps": 3,
+  "golden": {
+   "rubric": "Held-out (written before the revised guide edit). Correct if the main figure is about $99,715 (accept $99,300-$100,100), every 2025 line. Near match if it leads with the net figure of about $90,972 while also giving $99,715. Wrong if it gives only the net figure or another number."
+  }
  }
 ]

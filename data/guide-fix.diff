@@ -24,11 +24,11 @@
 +
 +## A product field summed over lines
 +
-+From `order_items`, `products.retail_price.sum()` counts each product once
-+(17,525.92: the catalog), while `sum(products.retail_price)` counts it once per
-+line (2,218,715.93: list value of everything sold). For anything "per item
-+sold", use `sum(products.x)` or `avg(products.x)`; the dotted form is the
-+per-product figure.
++From `order_items`, a joined dimension's dotted aggregate (`products.cost.sum()`,
++`products.retail_price.avg()`) counts each product once, not once per line it
++appears on. For anything "per item sold", use `sum(products.x)` or
++`avg(products.x)`, which count every line; the dotted form is the per-product
++figure.
 +
  ## What this package cannot answer
  
