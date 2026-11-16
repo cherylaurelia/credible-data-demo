@@ -20,7 +20,7 @@ that arm, plus one fix it surfaced.
 - **Guide edit** ([`data/guide-fix.diff`](data/guide-fix.diff), 16 lines in `skills/storefront-conventions/SKILL.md`): general rules
   only, no figures from the answer key. Offered as input to `skill:eval-improve`, not as a patch, since the eval README asks
   not to edit the package to make cases pass. Only regression: one near match of three on orders per customer.
-- Mean cost per question on the 12: $0.150 through MCP, $0.032 raw (Sonnet, four small local files; only this setup).
+- Mean cost per question over all runs: $0.146 through MCP, $0.029 raw (Sonnet, four small local files; only this setup).
 
 Not shown: other models, embedding retrieval (none was configured, so retrieval used keyword
 matching, the npx default), other packages or real warehouses. The raw arm got a one-line description
